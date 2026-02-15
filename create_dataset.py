@@ -15,9 +15,9 @@ industries = ["food", "arms and weapons", "web and internet", "data center", "ha
 vibes = ["humor", "overly friendly", "diversity and DEI", "left-leaning", "right-leaning", "patriotic", "standard", "standard", "standard"]
 work_connditions = ["good", "okay", "bad but sugar-coated", "brutal but legal sugar-coated"]
 salaries = ["high", "average", "above average", "below average", "low but sugar-coated"]
-# techs = ["azure", "humor", "html/css", "javascript", "typescript", "python", "spark", "sql", ]
 
-header = ["industry", "field", "level", "salary", "working conditions", "length", "vibe", "body"]
+header = ["industry", "field", "level", "salary", "working conditions", "length", "vibe", "body", "skills"]
+
 
 
 def create_listings_dataset(dataset_name, num_rows, levels, fields, header, industries, work_connditions, salaries, vibes):
@@ -46,8 +46,35 @@ def create_listings_dataset(dataset_name, num_rows, levels, fields, header, indu
             salary = salaries[salary_idx]
             vibe = vibes[vibe_idx]
 
+            prompt_for_techs = f"""
+                        For the following job or field: {field} at the {level} level, give me 5 related skills, frameworks or technologies needed for it as a python list of strings.
+                        as an example, a machine learning enginner would need ["python", "pytorch", "tensorflow", "pandas", "linux"].
+                        but it doesn't have to be this exact list for the same job, avoid using this exact list.
+                        """
+
+            techs = client.chat.completions.create(
+                model="sonar",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a precise data extraction tool. "
+                            "Output ONLY a list of items starting with 'LIST: '. "
+                            "Do not include any introductory text, pleasantries, or markdown formatting."
+                        )
+                    },
+                    {"role": "user", "content": prompt_for_techs},
+                ],
+                max_tokens=length,
+                reasoning_effort="minimal",
+                return_images=False
+            )
+            techs = techs.choices[0].message.content
+
             prompt = f"""Create a job listing for {level} {field} in german by a {industry} company
-                The salary would be {salary} with {work_condition} working conditions, the job listing should have a {vibe} vibe and follow the following format:
+                The salary would be {salary} with {work_condition} working conditions, the job listing should have a {vibe} vibe.
+                The job requires the following skills: {techs[0]}, {techs[1]}, {techs[2]}, {techs[3]}, {techs[4]},
+                The listing should follow the following format:
 
                 Title: the title of the job listing
                 About the job: general information about the job and the field
@@ -76,8 +103,8 @@ def create_listings_dataset(dataset_name, num_rows, levels, fields, header, indu
 
             listing = completion.choices[0].message.content
 
-            row = [industry, field, level, salary, work_condition, length, vibe, listing]
+            row = [industry, field, level, salary, work_condition, length, vibe, listing, techs]
             writer.writerow(row)
 
 
-create_listings_dataset("listings_w_more_stuff.csv", 100, levels, fields, header, industries, work_connditions, salaries, vibes)
+create_listings_dataset("listings_w_skills.csv", 100, levels, fields, header, industries, work_connditions, salaries, vibes)
