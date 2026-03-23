@@ -6,7 +6,7 @@ The system automatically creates synthetic datasets of job listings, processes t
 
 **Hardware & Performance:**
 This entire pipeline, including the model fine-tuning and inference, was successfully executed locally on **AMD hardware (ROCm)**. 
-By fine-tuning the model (like Qwen 3.5 2B) on this personalized dataset, the model's matching accuracy saw a significant improvement—jumping from a baseline of ~65% to **approximately 84%**.
+By fine-tuning the model (like Qwen 3.5 2B) on this personalized dataset, the model's matching accuracy saw a significant improvement—jumping from a baseline of ~55% to **approximately 84%**.
 
 
 <img width="49%" alt="Qwen_Qwen3 5-2B_base_benchmark_metrics" src="https://github.com/user-attachments/assets/580927e1-5265-43db-a731-56d64610e2a9" /> <img width="49%" alt="Qwen_Qwen3 5-2B_with_adapter_benchmark_metrics" src="https://github.com/user-attachments/assets/ebabdb20-0ea6-4365-ab35-85e011977505" />
