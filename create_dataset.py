@@ -1,9 +1,8 @@
 from perplexity import Perplexity
+from anthropic import Anthropic
 import random
 import csv, os
-
-
-client = Perplexity()
+from dotenv import load_dotenv
 
 fields = ["backend software dev", "frontend software dev", "fullstack software dev", "data scientist", "data engineer",
             "big data analyst","machine learning engineeer", "signal processing", "gpu programming", "C# dev", "cyber security",
@@ -13,14 +12,21 @@ levels = ["junior", "entry level", "mid level", "senior", "tech lead", "internsh
 industries = ["food", "arms and weapons", "web and internet", "data center", "hardware manufacturing", "social media", "landlord",
                 "furniture", "art", "merchendise", "insurance", "medical", "retail", "ethical heacking", "reseach", "banking"]
 vibes = ["humor", "overly friendly", "diversity and DEI", "left-leaning", "right-leaning", "patriotic", "standard", "standard", "standard"]
-work_connditions = ["good", "okay", "bad but sugar-coated", "brutal but legal sugar-coated"]
+work_connditions = ["good", "okay", "bad but sugar-coated"]
 salaries = ["high", "average", "above average", "below average", "low but sugar-coated"]
 
 header = ["industry", "field", "level", "salary", "working conditions", "length", "vibe", "body", "skills"]
 
 
 
-def create_listings_dataset(dataset_name, num_rows, levels, fields, header, industries, work_connditions, salaries, vibes):
+def create_listings_dataset(dataset_name, num_rows, levels, fields, header, industries, work_connditions, salaries, vibes, api_provider="perplexity", model="sonar"):
+    load_dotenv("key.env")
+    if api_provider == "anthropic":
+        anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        perplexity_client = None
+    else:
+        perplexity_client = Perplexity(api_key=os.getenv("PERPLEXITY_API_KEY"))
+        anthropic_client = None
     filename = dataset_name
 
     if not os.path.exists(filename) or os.path.getsize(filename) == 0:
@@ -38,7 +44,7 @@ def create_listings_dataset(dataset_name, num_rows, levels, fields, header, indu
             salary_idx = random.randint(0, len(salaries) - 1)
             vibe_idx = random.randint(0, len(vibes) - 1)
 
-            length = random.randint(1100, 1500)
+            length = random.randint(850, 1250)
             level = levels[level_idx]
             field = fields[field_idx]
             industry = industries[industry_idx]
@@ -52,24 +58,41 @@ def create_listings_dataset(dataset_name, num_rows, levels, fields, header, indu
                         but it doesn't have to be this exact list for the same job, avoid using this exact list.
                         """
 
-            techs = client.chat.completions.create(
-                model="sonar",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a precise data extraction tool. "
-                            "Output ONLY a list of items starting with 'LIST: '. "
-                            "Do not include any introductory text, pleasantries, or markdown formatting."
-                        )
-                    },
-                    {"role": "user", "content": prompt_for_techs},
-                ],
-                max_tokens=length,
-                reasoning_effort="minimal",
-                return_images=False
-            )
-            techs = techs.choices[0].message.content
+            if api_provider == "anthropic":
+                if not anthropic_client:
+                    raise ValueError("Anthropic package is not installed or client failed to initialize.")
+                techs_response = anthropic_client.messages.create(
+                    model=model,
+                    system=(
+                        "You are a precise data extraction tool. "
+                        "Output ONLY a list of items. "
+                        "Do not include any introductory text, pleasantries, or markdown formatting."
+                    ),
+                    messages=[
+                        {"role": "user", "content": prompt_for_techs},
+                    ],
+                    max_tokens=length,
+                )
+                techs = techs_response.content[0].text
+            else:
+                techs_response = perplexity_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are a precise data extraction tool. "
+                                "Output ONLY a list of items"
+                                "Do not include any introductory text, pleasantries, or markdown formatting."
+                            )
+                        },
+                        {"role": "user", "content": prompt_for_techs},
+                    ],
+                    max_tokens=length,
+                    reasoning_effort="minimal",
+                    return_images=False
+                )
+                techs = techs_response.choices[0].message.content
 
             prompt = f"""Create a job listing for {level} {field} in german by a {industry} company
                 The salary would be {salary} with {work_condition} working conditions, the job listing should have a {vibe} vibe.
@@ -91,20 +114,33 @@ def create_listings_dataset(dataset_name, num_rows, levels, fields, header, indu
                 for the salary, take whatever you guessed and subtract it by 15-20%. avoid putting this deduction in the job listing.
                 """
 
-            completion = client.chat.completions.create(
-                model="sonar",
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=length,
-                reasoning_effort="low",
-                return_images=False
-            )
-
-            listing = completion.choices[0].message.content
+            if api_provider == "anthropic":
+                completion = anthropic_client.messages.create(
+                    model=model,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=length,
+                )
+                listing = completion.content[0].text
+            else:
+                completion = perplexity_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=length,
+                    reasoning_effort="low",
+                    return_images=False
+                )
+                listing = completion.choices[0].message.content
 
             row = [industry, field, level, salary, work_condition, length, vibe, listing, techs]
             writer.writerow(row)
 
 
-create_listings_dataset("listings_w_skills.csv", 100, levels, fields, header, industries, work_connditions, salaries, vibes)
+# To use Perplexity (default):
+# create_listings_dataset("listings_testing.csv", 100, levels, fields, header, industries, work_connditions, salaries, vibes)
+
+# To use Anthropic (uncomment and ensure your ANTHROPIC_API_KEY environment variable is set):
+create_listings_dataset("listings_anthropic.csv", 400, levels, fields, header, industries, work_connditions, salaries, vibes, api_provider="anthropic", model="claude-haiku-4-5-20251001")
