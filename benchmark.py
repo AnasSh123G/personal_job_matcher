@@ -188,6 +188,8 @@ def run_benchmark(data, model_path, adapter=None, limit=None, quantize=False):
         try:
             import matplotlib.pyplot as plt
             import os
+            model_name = model_path.replace("/", "_")
+            adapter_suffix = "_with_adapter" if (args.adapter and args.adapter.strip()) else "_base"
             
             metrics = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
             values = [accuracy / 100, precision, recall, f1_score]
@@ -197,15 +199,14 @@ def run_benchmark(data, model_path, adapter=None, limit=None, quantize=False):
             
             plt.ylim(0, 1.05)
             plt.ylabel('Score')
-            plt.title('Benchmark Performance Metrics')
+            plt.title(f'Benchmark Performance Metrics for {model_name}{adapter_suffix}')
             
             for bar in bars:
                 yval = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width()/2, yval + 0.01, f"{yval:.2f}", 
                          ha='center', va='bottom', fontsize=10, fontweight='bold')
                 
-            model_name = model_path.replace("/", "_")
-            adapter_suffix = "_with_adapter" if (args.adapter and args.adapter.strip()) else "_base"
+            
             plot_path = os.path.join(os.getcwd(), f'{model_name}{adapter_suffix}_benchmark_metrics.png')
             plt.savefig(plot_path)
             plt.close()
