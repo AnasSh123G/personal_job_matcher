@@ -8,12 +8,18 @@ The system automatically creates synthetic datasets of job listings, processes t
 This entire pipeline, including the model fine-tuning and inference, was successfully executed locally on **AMD hardware (ROCm)**. 
 By fine-tuning the model (like Qwen 3.5 2B) on this personalized dataset, the model's matching accuracy saw a significant improvement—jumping from a baseline of ~65% to **approximately 84%**.
 
+
+<img width="49%" alt="Qwen_Qwen3 5-2B_base_benchmark_metrics" src="https://github.com/user-attachments/assets/580927e1-5265-43db-a731-56d64610e2a9" /> <img width="49%" alt="Qwen_Qwen3 5-2B_with_adapter_benchmark_metrics" src="https://github.com/user-attachments/assets/ebabdb20-0ea6-4365-ab35-85e011977505" />
+
+
+
 ## Architecture & Project Structure
 
 - **`main.py`**: A unified command-line interface (CLI) that orchestrates the pipeline.
 - **`create_dataset.py`**: Calls Perplexity or Anthropic APIs to generate synthetic job descriptions given various profiles, levels, and fields.
 - **`convert_to_json.py`**: Parses the plain text CSVs into JSON format, extracts target skills, calculates missing skills compared to my personal knowledge base, and computes a final match score resulting in a `recommended` (yes/no) label.
-- **`tuning.py`**: Fine-tunes language models (like Qwen, Llama, or Aya) on the labeled dataset utilizing QLoRA (4-bit quantization, LoRA adapters) with specific optimizations for **AMD ROCm environments** (e.g., handling VRAM limits and allocator configurations).
+- **`tuning.py`**: Fine-tunes language models (like Qwen, Llama, or Aya) on the labeled dataset utilizing QLoRA (4-bit quantization, LoRA adapter![Uploading Qwen_Qwen3.5-2B_base_benchmark_metrics.png…]()
+s) with specific optimizations for **AMD ROCm environments** (e.g., handling VRAM limits and allocator configurations).
 - **`benchmark.py`**: Runs a deterministic generation benchmark of the tuned model on unseen job listings to calculate Accuracy, Precision, Recall, and F1 Score for its binary classification task.
 
 ## Usage
