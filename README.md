@@ -18,8 +18,7 @@ By fine-tuning the model (like Qwen 3.5 2B) on this personalized dataset, the mo
 - **`main.py`**: A unified command-line interface (CLI) that orchestrates the pipeline.
 - **`create_dataset.py`**: Calls Perplexity or Anthropic APIs to generate synthetic job descriptions given various profiles, levels, and fields.
 - **`convert_to_json.py`**: Parses the plain text CSVs into JSON format, extracts target skills, calculates missing skills compared to my personal knowledge base, and computes a final match score resulting in a `recommended` (yes/no) label.
-- **`tuning.py`**: Fine-tunes language models (like Qwen, Llama, or Aya) on the labeled dataset utilizing QLoRA (4-bit quantization, LoRA adapter![Uploading Qwen_Qwen3.5-2B_base_benchmark_metrics.png…]()
-s) with specific optimizations for **AMD ROCm environments** (e.g., handling VRAM limits and allocator configurations).
+- **`tuning.py`**: Fine-tunes language models (like Qwen, Llama, or Aya) on the labeled dataset utilizing QLoRA.
 - **`benchmark.py`**: Runs a deterministic generation benchmark of the tuned model on unseen job listings to calculate Accuracy, Precision, Recall, and F1 Score for its binary classification task.
 
 ## Usage
